@@ -22,11 +22,6 @@ The website should be set up in a directory named `website/` (or similar) in you
 git clone https://github.com/astrodbtoolkit/Astro-Web website
 ```
 
-Or, if the user prefers a submodule:
-```bash
-git submodule add https://github.com/astrodbtoolkit/Astro-Web website
-```
-
 ## Step 2: Set up the Website Configuration
 
 Use the bundled setup script to generate the `.env` file. You must point it to the database file and the directory where you cloned the website.
