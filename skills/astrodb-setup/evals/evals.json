@@ -3,24 +3,67 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Review your astro-db skills and create a plan to have a fully working database after going through `@NearbyGalaxies_Jan2021_PUBLIC.fits`",
-      "expected_output": "Detects that the astrodb-template-db scaffold is already present in the working folder and confirms it. Confirms the data file exists. Presents an ordered end-to-end plan that maps to the six sibling skills (parse-data-table -> match-schema -> validate-schema-mapping -> generate-schema -> create-database -> ingest-sources), referencing the actual file name. Ends by prompting the user before proceeding rather than auto-running the whole pipeline.",
-      "files": ["NearbyGalaxies_Jan2021_PUBLIC.fits"],
-      "assertions": []
+      "prompt": "What's the first step to making a new astrodb?",
+      "expected_output": "Explains that the first step is to create your own GitHub repository from the astrodb-template (via 'Use this template' on https://github.com/astrodbtoolkit/astrodb-template-db) and provide its URL, and asks for a name for the database. Does not ask for or mention a data file — that comes in a later step.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "eval1_instructs_create_repo_from_template",
+          "text": "Instructs the user to create a new GitHub repository from the astrodb-template (e.g. 'Use this template' on astrodb-template-db) and to provide the new repo's URL"
+        },
+        {
+          "id": "eval1_asks_db_name",
+          "text": "Asks the user for a database name"
+        },
+        {
+          "id": "eval1_no_datafile",
+          "text": "Does not ask for or reference a data file, parsing, or ingestion (that is a later step)"
+        }
+      ]
     },
     {
       "id": 2,
-      "prompt": "I've got a catalog at NearbyGalaxies_Jan2021_PUBLIC.fits and I want to end up with a fully working AstroDB database. Get me set up.",
-      "expected_output": "Detects that the astrodb-template-db scaffold is NOT present in the working folder, explains it is required, and offers to clone it via `git clone https://github.com/astrodbtoolkit/astrodb-template-db` (asking for confirmation or cloning into ./astrodb-template-db). Does not silently skip the missing scaffold. Still confirms the data file. Only presents the plan / proceeds once the scaffold prerequisite is addressed.",
-      "files": ["NearbyGalaxies_Jan2021_PUBLIC.fits"],
-      "assertions": []
+      "prompt": "I made my repo from the template, it's at https://github.com/jdoe/bd-survey-db . Call the database BdSurvey and get it set up.",
+      "expected_output": "Clones https://github.com/jdoe/bd-survey-db into the working directory, verifies the cloned repo has the template structure (a data/ directory, a database.toml, and a schema.yaml), and updates database.toml so db_name is 'BdSurvey'. Does not handle a data file.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "eval2_clones_repo",
+          "text": "Clones the provided repo URL (https://github.com/jdoe/bd-survey-db) into the working directory"
+        },
+        {
+          "id": "eval2_verifies_structure",
+          "text": "Verifies the cloned repo has the template directory structure: a data/ directory, a database.toml file, and a schema.yaml file"
+        },
+        {
+          "id": "eval2_updates_db_name",
+          "text": "Updates database.toml so db_name is set to the user-provided name (BdSurvey)"
+        },
+        {
+          "id": "eval2_no_datafile",
+          "text": "Does not ask for or handle a data file"
+        }
+      ]
     },
     {
       "id": 3,
-      "prompt": "Let's set up a brand new AstroDB database from scratch and get it fully working end to end. Walk me through what needs to happen.",
-      "expected_output": "Detects the astrodb-template-db scaffold (present in working folder) and confirms it. Notices no data file was provided and asks the user to supply one (path or upload), listing accepted formats (FITS, CSV, ECSV, HDF5, VOTable, Parquet, Excel). Does NOT fabricate a plan around a nonexistent file or invent a data file.",
+      "prompt": "Set up a new astrodb database called NearbyGalaxies.",
+      "expected_output": "Notes the database name (NearbyGalaxies) and, because no repo URL was given, asks the user to create a repo from the astrodb-template ('Use this template') and provide its URL before cloning. Does not invent a repo URL or fabricate a clone.",
       "files": [],
-      "assertions": []
+      "assertions": [
+        {
+          "id": "eval3_asks_for_repo_url",
+          "text": "Asks the user to create a repo from the astrodb-template and provide its URL before cloning"
+        },
+        {
+          "id": "eval3_no_fabricated_url",
+          "text": "Does not invent a repo URL or clone an arbitrary repository"
+        },
+        {
+          "id": "eval3_no_datafile",
+          "text": "Does not ask for or reference a data file"
+        }
+      ]
     }
   ]
 }
