@@ -1,5 +1,5 @@
 {
-    "skill_name": "astrodb-ingest-source",
+    "skill_name": "astrodb-ingest-sources",
     "evals": [
       {
         "id": 1,

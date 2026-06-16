@@ -1,5 +1,5 @@
 ---
-name: astrodb-parse-data-table
+name: astrodb-build-parse-table
 description: Parse a data table file and extract column information (name, description, units, type). Supports FITS, CSV, ECSV, HDF5, VOTable, Parquet, Excel, and more. Generates a markdown table summarizing the columns.
 compatibility: python, astropy, pandas
 metadata:
@@ -83,7 +83,7 @@ except Exception:
     for col in df.columns:
         print(col, df[col].dtype)
 
-# Write sidecar so downstream skills (e.g. astrodb-match-schema, astrodb-validate-schema-mapping)
+# Write sidecar so downstream skills (e.g. astrodb-build-schema-match, astrodb-build-schema-validate)
 # can reuse the same reader without re-discovering the format.
 # Output file paths are added to the sidecar in Step 5.
 with open("tmp/astrodb-parse-result.json", "w") as f:

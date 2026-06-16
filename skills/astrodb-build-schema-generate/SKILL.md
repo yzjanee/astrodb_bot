@@ -1,6 +1,6 @@
 ---
-name: astrodb-generate-schema
-description: Generate a Felis YAML schema for a user-provided astronomical data file, using the output of the astrodb-match-schema and astrodb-validate-schema-mapping skills. Produces a standards-compliant schema.yaml covering each mapped table and column, with proper Felis syntax (@id references, datatypes, nullable flags, units, and foreign key constraints). Always use this skill when the user has completed a schema mapping (with or without validation) and wants to produce a Felis YAML, create a schema file for their data, generate schema.yaml, export their mapping as a schema, or document their database tables. Also trigger when the user says "generate schema", "create felis yaml", "make a schema file", or "turn this mapping into a schema".
+name: astrodb-build-schema-generate
+description: Generate a Felis YAML schema for a user-provided astronomical data file, using the output of the astrodb-build-schema-match and astrodb-build-schema-validate skills. Produces a standards-compliant schema.yaml covering each mapped table and column, with proper Felis syntax (@id references, datatypes, nullable flags, units, and foreign key constraints). Always use this skill when the user has completed a schema mapping (with or without validation) and wants to produce a Felis YAML, create a schema file for their data, generate schema.yaml, export their mapping as a schema, or document their database tables. Also trigger when the user says "generate schema", "create felis yaml", "make a schema file", or "turn this mapping into a schema".
 compatibility: python, pyyaml
 metadata:
   authors: ["Claude"]
@@ -24,7 +24,7 @@ Read `references/felis-syntax.md` for the exact syntax rules and examples before
 
 You need at minimum:
 
-1. **The mapping table** from `astrodb-match-schema` — rows like:
+1. **The mapping table** from `astrodb-build-schema-match` — rows like:
    `Input Column | Description | Units | Type | DB Table | DB Field | Confidence | Notes`
 
 2. **Schema name** — what to call the new schema (e.g. the dataset name or survey name).
@@ -32,12 +32,12 @@ You need at minimum:
 
 Optionally also accept:
 
-3. **The validation report** from `astrodb-validate-schema-mapping` — identifies nullable violations
+3. **The validation report** from `astrodb-build-schema-validate` — identifies nullable violations
    and type mismatches. If provided, use it to set `nullable` flags and resolve type conflicts.
 
 4. **The data file path** — used to infer datatypes for any columns that need them.
 
-If the user hasn't run `astrodb-validate-schema-mapping` yet, note that the schema will be generated
+If the user hasn't run `astrodb-build-schema-validate` yet, note that the schema will be generated
 without null/type checks, and suggest they validate before ingesting.
 
 ## Step 1: Identify unmatched and problematic columns

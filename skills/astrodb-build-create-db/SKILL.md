@@ -1,6 +1,6 @@
 ---
-name: astrodb-create-database
-description: Create an empty SQLite AstroDB database from a Felis-validated schema.yaml, following the astrodb-template-db file structure. Use this skill whenever the user wants to create a database, initialize a SQLite database, build an AstroDB, or has just finished generating a Felis schema and wants to turn it into a working database. Always trigger after astrodb-generate-schema completes, or when the user says "create database", "make database", "initialize database", "create sqlite", "make sqlite", "build the database", "create astrodb", "initialize astrodb", or "set up the database". Do NOT skip this skill just because a schema.yaml already exists — this skill is exactly what handles that case.
+name: astrodb-build-create-db
+description: Create an empty SQLite AstroDB database from a Felis-validated schema.yaml, following the astrodb-template-db file structure. Use this skill whenever the user wants to create a database, initialize a SQLite database, build an AstroDB, or has just finished generating a Felis schema and wants to turn it into a working database. Always trigger after astrodb-build-schema-generate completes, or when the user says "create database", "make database", "initialize database", "create sqlite", "make sqlite", "build the database", "create astrodb", "initialize astrodb", or "set up the database". Do NOT skip this skill just because a schema.yaml already exists — this skill is exactly what handles that case.
 compatibility: python, astrodbkit, felis
 ---
 
@@ -12,7 +12,7 @@ using `astrodbkit`.
 
 ## Prerequisites
 
-This skill requires a schema.yaml that has **passed** `felis validate`. The astrodb-generate-schema
+This skill requires a schema.yaml that has **passed** `felis validate`. The astrodb-build-schema-generate
 skill always runs this validation as its final step, so if the user just completed that workflow
 the schema is already validated. If there is any doubt, validate before proceeding.
 
@@ -20,7 +20,7 @@ the schema is already validated. If there is any doubt, validate before proceedi
 
 Check (in order):
 1. A path the user explicitly stated in the conversation
-2. `tmp/<schema-name>-schema.yaml` — the default output of astrodb-generate-schema
+2. `tmp/<schema-name>-schema.yaml` — the default output of astrodb-build-schema-generate
 3. `schema.yaml` in the current working directory
 
 If you cannot find the file, ask the user for the path before continuing.
@@ -36,7 +36,7 @@ felis validate <schema-path>
 ```
 
 **If validation fails:** show the error to the user and stop — do not create the database from
-a broken schema. Offer to go back to astrodb-generate-schema to fix the issue.
+a broken schema. Offer to go back to astrodb-build-schema-generate to fix the issue.
 
 **If validation passes:** proceed.
 
@@ -122,7 +122,7 @@ python <skill-dir>/scripts/create_db.py --schema ... --db-path ...
 ```
 
 **If the script fails**, read the traceback carefully:
-- `felis.datamodel` errors → schema is not valid Felis; offer to re-run astrodb-generate-schema
+- `felis.datamodel` errors → schema is not valid Felis; offer to re-run astrodb-build-schema-generate
 - `sqlite3` errors → check that the db path is writable
 - `ImportError` for astrodbkit → astrodbkit is not installed; run `uv add astrodbkit`
 

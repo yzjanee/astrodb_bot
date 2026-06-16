@@ -1,6 +1,6 @@
 ---
-name: astrodb-match-schema
-description: Match columns from an astronomical data table to fields in the AstroDB template database schema. Use this skill whenever the user wants to ingest, import, or load a data table (FITS, CSV, ECSV, etc.) into an AstroDB database, wants to know which database table or field a column belongs to, asks about schema mapping, column mapping, or data ingestion, or has output from the astrodb-parse-data-table skill and wants to figure out where each column goes. This skill should also trigger when the user shares a table of columns (with names, descriptions, units, types) and asks about AstroDB, SIMPLE, or any astrodb-toolkit database. Always use this skill proactively after astrodb-parse-data-table runs if the user seems to be working toward database ingestion.
+name: astrodb-build-schema-match
+description: Match columns from an astronomical data table to fields in the AstroDB template database schema. Use this skill whenever the user wants to ingest, import, or load a data table (FITS, CSV, ECSV, etc.) into an AstroDB database, wants to know which database table or field a column belongs to, asks about schema mapping, column mapping, or data ingestion, or has output from the astrodb-build-parse-table skill and wants to figure out where each column goes. This skill should also trigger when the user shares a table of columns (with names, descriptions, units, types) and asks about AstroDB, SIMPLE, or any astrodb-toolkit database. Always use this skill proactively after astrodb-build-parse-table runs if the user seems to be working toward database ingestion.
 compatibility: python, astropy
 metadata:
   authors: ["Claude"]
@@ -16,11 +16,11 @@ exactly which table and field each column belongs to before ingesting data.
 
 Accept input in either form:
 
-1. **A markdown table** (e.g., output from the `astrodb-parse-data-table` skill) with columns: Column,
+1. **A markdown table** (e.g., output from the `astrodb-build-parse-table` skill) with columns: Column,
    Description, Units, Type
-2. **A data file path** — run the `astrodb-parse-data-table` skill on it first, then proceed with its output
+2. **A data file path** — run the `astrodb-build-parse-table` skill on it first, then proceed with its output
 
-If given a file path, invoke `astrodb-parse-data-table` first and wait for its output before continuing.
+If given a file path, invoke `astrodb-build-parse-table` first and wait for its output before continuing.
 
 ## The AstroDB Template Schema
 
@@ -29,7 +29,7 @@ It covers all Lookup Tables, Main Tables, and Data Tables with every field name.
 
 ## Astropy Unit Normalization
 
-When input comes from the `astrodb-parse-data-table` skill, units may be in astropy's canonical spaced
+When input comes from the `astrodb-build-parse-table` skill, units may be in astropy's canonical spaced
 format. Treat these as equivalent to their compact forms when matching:
 
 | Astropy format | Equivalent to |
@@ -96,12 +96,12 @@ For every "Add new field" or "Add new table" choice, also add a row to the **Pro
 Additions** section of the HTML output (see `references/html-output.md`). Keep this lightweight
 — the proposed table/field name plus unit and datatype (taken from the input column where
 known) and a short description is enough. Don't try to work out Felis-level details like
-nullability or primary keys here; that's what `astrodb-generate-schema` does next, using this
+nullability or primary keys here; that's what `astrodb-build-schema-generate` does next, using this
 proposal as its starting point.
 
 ## Output
 
-Output the results as a markdown table, adding columns onto the output from `astrodb-parse-data-table` for the matched AstroDB Table, AstroDB Field, Confidence level, and Notes on the match. 
+Output the results as a markdown table, adding columns onto the output from `astrodb-build-parse-table` for the matched AstroDB Table, AstroDB Field, Confidence level, and Notes on the match. 
 
 Also write the results to an HTML file using the `Write` tool. Follow the full visual spec in `references/html-output.md` — read it now before writing the file.
 
@@ -115,7 +115,7 @@ choices, also generate the **Proposed Schema Additions** section described in
 
 After writing the file, give a short plain-text summary in the chat (2–4 sentences) noting how
 many columns matched at each confidence level and flagging anything critical. If there are
-proposed schema additions, mention that running `astrodb-generate-schema` next can turn them
+proposed schema additions, mention that running `astrodb-build-schema-generate` next can turn them
 into `schema.yaml` changes.
 Tell the user the file path to both the markdown table and the html file.  
 

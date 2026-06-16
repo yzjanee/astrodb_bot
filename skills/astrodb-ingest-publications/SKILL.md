@@ -1,5 +1,5 @@
 ---
-name: astrodb-ingest-publication
+name: astrodb-ingest-publications
 description: "Generate and run a Python script that adds publications (references/citations) to an AstroDB Publications lookup table. Use this skill when the user says: ingest a publication, add a paper/reference/citation, populate the Publications table, 'add this DOI/bibcode', or names a paper by author+year (e.g. 'add Cruz et al. 2003') even when NO DOI is given. Also use to backfill or complete missing metadata (bibcode, DOI, description) for reference shortnames that ALREADY exist in a Publications table but are blank — e.g. 'look at Publications and fill everything out'. Also use when a data table's discovery references are missing from Publications and must be added before sources/photometry/spectra can be ingested. Handles a single paper, a batch of references from a table column, or backfilling an existing table — including the common case where the user has only a reference shortname or author+year and the paper must first be looked up online. Works standalone or as the prerequisite step before ingest-sources."
 compatibility: python, astrodb_utils
 ---

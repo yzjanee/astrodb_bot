@@ -1,6 +1,6 @@
 ---
-name: astrodb-validate-schema-mapping
-description: Validate an AstroDB schema mapping by checking that data columns are compatible with the schema fields they've been mapped to. Use this skill whenever the user has completed a schema mapping (e.g., from the astrodb-match-schema skill) and wants to check whether the actual data is safe to ingest — specifically (1) are there null values in data columns that map to non-nullable schema fields, and (2) do data column types match the expected types in schema.yaml? Always use this skill proactively after astrodb-match-schema produces a mapping, before the user proceeds to write ingestion code. Trigger on phrases like "validate","check my mapping", "will this ingest cleanly", "are there any type mismatches", "null check", "nullable violations", or "verify schema compatibility".
+name: astrodb-build-schema-validate
+description: Validate an AstroDB schema mapping by checking that data columns are compatible with the schema fields they've been mapped to. Use this skill whenever the user has completed a schema mapping (e.g., from the astrodb-build-schema-match skill) and wants to check whether the actual data is safe to ingest — specifically (1) are there null values in data columns that map to non-nullable schema fields, and (2) do data column types match the expected types in schema.yaml? Always use this skill proactively after astrodb-build-schema-match produces a mapping, before the user proceeds to write ingestion code. Trigger on phrases like "validate","check my mapping", "will this ingest cleanly", "are there any type mismatches", "null check", "nullable violations", or "verify schema compatibility".
 compatibility: python, astropy, pyyaml
 metadata:
   authors: ["Claude"]
@@ -23,7 +23,7 @@ Two classes of problems can block a clean ingest:
 
 You need three things:
 
-1. **The mapping table** — the markdown table from astrodb-match-schema, with columns:
+1. **The mapping table** — the markdown table from astrodb-build-schema-match, with columns:
    `Input Column | Description | Units | Type | DB Table | DB Field | Confidence | Notes`
    (or a similar structure — adapt if column names differ slightly)
 
@@ -63,7 +63,7 @@ For each row in the mapping table where DB Table and DB Field are filled in (ski
 rows and rows mapped to "—" or "N/A"):
 
 Write a short Python script to:
-- Load the data file. First check for the sidecar written by astrodb-parse-data-table:
+- Load the data file. First check for the sidecar written by astrodb-build-parse-table:
   ```python
   import json, os
   sidecar = "tmp/astrodb-parse-result.json"
@@ -75,7 +75,7 @@ Write a short Python script to:
   else:
       reader, fmt, pandas_meth = "astropy", None, None
   ```
-  Then load with the same reader that astrodb-parse-data-table already verified:
+  Then load with the same reader that astrodb-build-parse-table already verified:
   ```python
   from astropy.table import Table
   import pandas as pd

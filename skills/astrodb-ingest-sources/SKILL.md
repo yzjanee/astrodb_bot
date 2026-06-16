@@ -1,5 +1,5 @@
 ---
-name: ingest-sources
+name: astrodb-ingest-sources
 description: "Generate and run a Python script that ingests sources (astronomical objects) into an AstroDB Sources table from a data table. Use this skill when the user says: ingest sources, ingest objects, add new sources to the database, add objects to the database, or provides a FITS/CSV/ECSV file and wants to populate the Sources table. Works standalone or as the step after match-schema."
 compatibility: python, astropy, astrodb_utils, astroquery
 ---
