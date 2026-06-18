@@ -24,7 +24,6 @@ To install this in another agent, you can copy the `skills/` directory to whatev
 
 - [`astrodb-website`](skills/astrodb-website/SKILL.md) — Set up a FastAPI web interface ([astrodb-web](https://github.com/astrodbtoolkit/astrodb-web)) to browse and visualize an AstroDB SQLite database.
 
-
 ## Requirements
 
 - an AI skill runner that reads `.agents/skills/` (or the appropriate directory for your agent)
@@ -36,10 +35,6 @@ To install this in another agent, you can copy the `skills/` directory to whatev
   - `astrodbkit`
   - `astrodb_utils`
   - `pytest`
-
-## Releases
-
-Versioned releases are available on the [Releases page](../../releases). Use a tagged release when installing skills into a project so you can pin to a known-good version.
 
 ## License
 
