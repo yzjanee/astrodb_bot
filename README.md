@@ -24,12 +24,11 @@ To install this in another agent, you can copy the `skills/` directory to whatev
 
 - [`astrodb-website`](skills/astrodb-website/SKILL.md) — Set up a FastAPI web interface ([astrodb-web](https://github.com/astrodbtoolkit/astrodb-web)) to browse and visualize an AstroDB SQLite database.
 
-
 ## Requirements
 
 - an AI skill runner that reads `.agents/skills/` (or the appropriate directory for your agent)
-- `uv` or `pip` to install Python packages
-- Python 3.11+
+- `uv` to install Python packages
+- Python 3.13+
   - `astropy`
   - `pandas` for fallback table parsing
   - `lsst-felis`
