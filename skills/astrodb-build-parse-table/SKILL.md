@@ -12,21 +12,17 @@ metadata:
 ## Instructions
 Parse the data table file `$ARGUMENTS` and extract column information.
 
-### Step 0: Check for a directions document
+**All outputs from this skill must be written inside a folder named `astrodb-build-artifacts/` in the current working directory.** Create this folder before writing any files.
 
-Before doing anything else, check for a directions document in this order:
+### Step 0: Create the artifact folder
 
-1. **User-provided path** — if the user passed a path to a directions document (as part of their
-   message or as an argument alongside the data file), read it from that path. Then copy it to
-   `astrodb-build-artifacts/directions.md` so downstream skills can find it automatically.
-2. **Artifact copy** — if no path was provided, check whether
-   `astrodb-build-artifacts/directions.md` already exists (written by a prior run). If it does,
-   read it.
-3. **Neither** — proceed without a directions document.
+Run this before anything else:
 
-The directions document captures dataset-specific decisions (columns to skip, how to handle edge
-cases, schema choices) that should guide your interpretation throughout this skill. Honor any
-explicit direction in it over the default heuristics.
+```bash
+mkdir -p astrodb-build-artifacts
+```
+
+If this fails, stop and tell the user you cannot create the output directory.
 
 ### Step 1: Make sure Python is installed and the necessary libraries are available
 
@@ -214,3 +210,15 @@ with open("astrodb-build-artifacts/astrodb-parse-result.json", "w") as f:
 ### Step 6: Iterate as needed
 
 Ask the user to inspect the results table and check if everything looks good, or if they want to make any edits to the descriptions, units, or types. If they want to make edits, allow them to specify which column(s) and what changes to make, then update the markdown and HTML files accordingly.
+
+## Completion Checklist
+
+Before telling the user the table is parsed, confirm every item below. Anything unmet must be done — or
+explicitly waived by the user — first. Don't claim a value you didn't actually extract.
+
+- [ ] Descriptions were extracted using the format-specific methods in `references/format-specific-metadata.md` — not taken from what Step 2 printed (which is only reliable for ECSV).
+- [ ] Missing descriptions/units were inferred where possible; for any still missing, you asked the user (when fewer than 10) or noted at the end how many remain.
+- [ ] dtypes are shown as human-readable strings (e.g. `float64`, `str`), not raw numpy codes like `>f8`.
+- [ ] Output went to a fresh `astrodb-build-artifacts/<base>-parsed-data-table/` directory (an existing one was not overwritten), and both the `.md` and `.html` files were written, each beginning with the metadata block.
+- [ ] The sidecar `astrodb-build-artifacts/astrodb-parse-result.json` was written and then updated with the output file paths.
+- [ ] You showed links to both files in the chat (the table was not dumped inline) and invited the user to review or edit.
