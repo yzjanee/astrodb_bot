@@ -26,14 +26,18 @@ Every entry in `Publications` has a `reference` shortname. Always construct it a
 | Bonaca et al. | 2020 | `Bona20` |
 | Wu & Xi | 2021 | `WuXi21` (or `Wu__21` for very short names) |
 
-**Disambiguation** — if two papers share the same first-author/year, append the **last 4
-characters of the DOI** separated by `.`:
+**Disambiguation** — if two papers would share the same first-author/year shortname, the
+**second reference does not get a variant shortname**. Instead, cite it in the `comments`
+field of the data row that references it (e.g. `Sources.comments`, `Parallaxes.comments`,
+`Associations.comments`). Use the last 4 characters of its DOI as a concise identifier in
+that comment:
 
-- DOI `10.3847/2041-8213/ab800c` → suffix `800c` → `Bona20.800c`
+- DOI `10.3847/2041-8213/ab800c` → note as `see also 800c` in the row's `comments` field
 
-**Never use `a` / `b` / `c` letter suffixes** (e.g. `Bona20a`). Always use the DOI suffix
-instead. When ADS is available it generates a compliant shortname automatically; when using
-`ignore_ads=True`, construct it yourself with this rule.
+**Never use `a` / `b` / `c` letter suffixes** (e.g. `Bona20a`) and never append a DOI
+suffix to the shortname itself (e.g. `Bona20.800c`). When ADS is available it generates a
+compliant shortname automatically; when using `ignore_ads=True`, construct it yourself with
+this rule.
 
 ## Critical constraint: `ingest_publication` requires a DOI or bibcode
 
