@@ -24,7 +24,7 @@
     {
       "id": 2,
       "prompt": "I made my repo from the template, it's at https://github.com/jdoe/bd-survey-db . Call the database BdSurvey and get it set up.",
-      "expected_output": "Clones https://github.com/jdoe/bd-survey-db into the working directory, verifies the cloned repo has the template structure (a data/ directory, a database.toml, and a schema.yaml), and updates database.toml so db_name is 'BdSurvey'. Does not handle a data file.",
+      "expected_output": "Clones https://github.com/jdoe/bd-survey-db into the working directory, verifies the cloned repo has the template structure (a data/ directory, a database.toml, and a schema.yaml), removes the template's pre-generated schema files (schema_erd.png and docs/schema/*.md), and updates database.toml so db_name is 'BdSurvey'. Does not handle a data file.",
       "files": [],
       "assertions": [
         {
@@ -38,6 +38,14 @@
         {
           "id": "eval2_updates_db_name",
           "text": "Updates database.toml so db_name is set to the user-provided name (BdSurvey)"
+        },
+        {
+          "id": "eval2_removes_schema_erd",
+          "text": "Removes schema_erd.png from the cloned repo"
+        },
+        {
+          "id": "eval2_removes_docs_schema_md",
+          "text": "Removes the .md files in docs/schema/ from the cloned repo"
         },
         {
           "id": "eval2_no_datafile",

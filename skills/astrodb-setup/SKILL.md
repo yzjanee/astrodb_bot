@@ -72,7 +72,21 @@ If any of the three is missing, the repo probably wasn't created from the astrod
 user what's absent and have them confirm they used **Use this template** on astrodb-template-db before
 going on.
 
-## Step 5: Set the database name in database.toml
+## Step 5: Remove generated schema representations from the template
+
+The template ships with pre-generated schema files that reflect the *template* schema, not the user's
+new database. Delete them now so they don't mislead anyone and so they can be regenerated fresh once
+the user's real schema is in place:
+
+```bash
+rm -f <repo-dir>/schema_erd.png
+rm -f <repo-dir>/docs/schema/*.md
+```
+
+Both removals are safe even if the files don't exist (`-f` suppresses errors). Don't skip this step —
+leaving these stale files in place is the bug this step fixes.
+
+## Step 6: Set the database name in database.toml
 
 Update the cloned `database.toml` so `db_name` is the name from Step 2. It ships as
 `db_name = "astrodb-template"`; change only that value and leave the rest of the file (and the trailing
@@ -86,7 +100,7 @@ grep '^db_name' <repo-dir>/database.toml   # confirm it now reads the user's nam
 Editing the line by hand is fine too — the point is that `db_name` ends up matching the user's chosen
 name.
 
-## Step 6: Confirm, and point to what's next
+## Step 7: Confirm, and point to what's next
 
 Tell the user the scaffold is ready: where the repo was cloned, that the structure checks out, and that
 `db_name` is set. Then name the next step, `astro-parse-data-table`, without doing it — adding a data table to parse and map into
