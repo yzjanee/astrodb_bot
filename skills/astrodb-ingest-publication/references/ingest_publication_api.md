@@ -129,13 +129,14 @@ No token? Run with `ignore_ads=True` and supply `reference` (and `description`) 
 
 ## reference naming convention
 
-The `reference` is a short, unique identifier — first four letters of the first author's
+The `reference` is a short, unique identifier — **first four letters** of the first author's
 last name + two-digit year:
 
 - Smith et al. 2020 → `Smit20`
 - Short last names: use first-name initials or underscores → `WuXi21` or `Wu__21`
-- Multiple papers, same first-author/year: append the last digits of the DOI/bibcode →
-  `Smit20.123`. Avoid `abc` suffixes.
+- Multiple papers, same first-author/year: append the **last 4 characters of the DOI** as a
+  suffix separated by `.` → `Smit20.800c` (where `800c` are the last 4 chars of the DOI).
+  **Never use `a`, `b`, `c` letter suffixes** like `Smit20a` or `Smit20b`.
 
 When ADS is available it generates this for you. When using `ignore_ads=True`, construct it
 yourself with this rule (or use the shortname already present in the user's table).
