@@ -14,10 +14,19 @@ exactly which table and field each column belongs to before ingesting data.
 
 ## Directions Document
 
-Before matching, check whether `artifacts/directions.md` exists in the current working directory.
-If it does, read it now — it contains dataset-specific decisions (which columns go where, what to
-ignore, custom tables, known edge cases) that should directly inform how you map columns. Honor any
-explicit direction over the default matching heuristics.
+Before matching, check for a directions document in this order:
+
+1. **User-provided path** — if the user passed a path to a directions document as part of their
+   input, read it from that path. Then copy it to `astrodb-build-artifacts/directions.md` so it
+   persists for downstream skills.
+2. **Artifact copy** — if no path was provided, check whether
+   `astrodb-build-artifacts/directions.md` already exists (written by a prior skill run). If it
+   does, read it.
+3. **Neither** — proceed without a directions document.
+
+The directions document contains dataset-specific decisions (which columns go where, what to ignore,
+custom tables, known edge cases) that should directly inform how you map columns. Honor any explicit
+direction in it over the default matching heuristics.
 
 ## Input
 

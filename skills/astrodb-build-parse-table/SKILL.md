@@ -14,10 +14,19 @@ Parse the data table file `$ARGUMENTS` and extract column information.
 
 ### Step 0: Check for a directions document
 
-Before doing anything else, check whether `artifacts/directions.md` exists in the current working
-directory. If it does, read it now — it captures dataset-specific decisions (columns to skip, how
-to handle edge cases, schema choices) that should guide your interpretation throughout this skill.
-If it doesn't exist, proceed without it.
+Before doing anything else, check for a directions document in this order:
+
+1. **User-provided path** — if the user passed a path to a directions document (as part of their
+   message or as an argument alongside the data file), read it from that path. Then copy it to
+   `astrodb-build-artifacts/directions.md` so downstream skills can find it automatically.
+2. **Artifact copy** — if no path was provided, check whether
+   `astrodb-build-artifacts/directions.md` already exists (written by a prior run). If it does,
+   read it.
+3. **Neither** — proceed without a directions document.
+
+The directions document captures dataset-specific decisions (columns to skip, how to handle edge
+cases, schema choices) that should guide your interpretation throughout this skill. Honor any
+explicit direction in it over the default heuristics.
 
 ### Step 1: Make sure Python is installed and the necessary libraries are available
 
