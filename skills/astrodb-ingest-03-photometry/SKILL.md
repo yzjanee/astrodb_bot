@@ -40,6 +40,9 @@ warnings with fixes.
 4. **Publications table populated**: every `reference` value must already exist in `Publications`.
    If any reference is missing, **offer to run `astrodb-ingest-publications` as a sub-step** before
    proceeding — do not just tell the user to do it manually and stop.
+   If the table's reference values are written differently from the shortnames (e.g. `Bonaca2020`
+   vs `Bona20`), translate them with `astrodb-ingest-artifacts/reference_map.json` (see "Reference
+   map" in `references/astrodb-ingest-instructions.md`) and check the **translated** values.
 5. **Sources table populated**: every `source` must already exist in `Sources` (or resolve through
    `Names`). Photometry attaches to an existing source; it does **not** create one. If sources are
    missing, **offer to run `astrodb-ingest-sources` as a sub-step** first.
@@ -216,6 +219,8 @@ Do not copy `scripts/ingest_photometry.py` verbatim. The output script must:
 - Pass `telescope` and `regime` — both **figured out from each band's SVO filter** in Step 4, not left
   blank just because they weren't columns in the table — plus the optional `magnitude_error`, `epoch`,
   and `comments` when the data has them.
+- Translate the reference column through `reference_map.json` at run time, as the template's
+  `to_shortname()` does — never paste a hand-written copy of the map into the script.
 - Set `SAVE_DB = False`.
 - Use the dry-run log message: `"Dry run complete — NOT saved. Set SAVE_DB = True to write the database to JSON files."`
 
@@ -256,7 +261,7 @@ evidence-annotated list in your final message, per `references/astrodb-ingest-in
 
 - [ ] `database.toml` was located (you asked the user rather than inventing one when it wasn't found).
 - [ ] Every source name was resolved to a unique `Sources.source` (directly or through `Names`), and any that did not resolve were flagged — with `astrodb-ingest-sources` offered as a sub-step rather than inventing sources or ingesting against a non-existent one.
-- [ ] Every `reference` already exists in `Publications` — and for any that were missing, you offered to run `astrodb-ingest-publications` rather than just telling the user to do it.
+- [ ] Every `reference` already exists in `Publications` (after translating through `astrodb-ingest-artifacts/reference_map.json`, if it exists) — and for any that were missing, you offered to run `astrodb-ingest-publications` rather than just telling the user to do it. The script reads the map at run time rather than holding a hand-written copy.
 - [ ] Every band was mapped to a **verified SVO filter ID**, ambiguous bands were confirmed with the user rather than guessed, and its `PhotometryFilters` / `Telescopes` / `Instruments` rows were ensured to exist **before** any magnitude was ingested.
 - [ ] Each band's `regime` was derived from its SVO effective wavelength and resolved against `RegimeList` (adding it, or picking an existing one with the user, when `get_db_regime` returned nothing), and `telescope` was populated on the `Photometry` rows.
 - [ ] If the data had asymmetric `magnitude_error_upper` / `magnitude_error_lower` columns, you wrote a custom script (modeled on `ingest_photometry`) to ingest them into those columns rather than dropping or silently collapsing them.

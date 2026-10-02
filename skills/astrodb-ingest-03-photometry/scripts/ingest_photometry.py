@@ -7,7 +7,9 @@ user's real column names, file path, BAND_SETUP, and SOURCE_NAME_MAP. Every valu
 placeholder to be replaced with a real one — never leave placeholders in the generated script.
 """
 
+import json
 import logging
+from pathlib import Path
 
 import numpy as np
 from astropy.table import Table
@@ -55,6 +57,17 @@ BAND_SETUP = {
 # --- Canonical source names — {data_table_name: Sources.source} from Step 2 ---
 # Leave as {} to resolve inline via find_source_in_db (below); prefer the Step 2 map when you have it.
 SOURCE_NAME_MAP = {}
+
+# --- Reference map — data-table values -> Publications shortnames ---
+# Written by astrodb-ingest-01-publications (e.g. "Bonaca2020" -> "Bona20"). Read it here
+# instead of pasting a copy, so every ingest script translates references the same way.
+REFERENCE_MAP_PATH = Path("astrodb-ingest-artifacts/reference_map.json")
+REFERENCE_MAP = json.loads(REFERENCE_MAP_PATH.read_text()) if REFERENCE_MAP_PATH.exists() else {}
+
+
+def to_shortname(value):
+    value = str(value).strip()
+    return REFERENCE_MAP.get(value, value)
 
 
 def is_missing(value):
@@ -169,7 +182,7 @@ def ingest_all(db, data, band_regime):
             counts["skipped_source_missing"] += 1
             logger.warning(f"No unique source match for {row[SOURCE_COL]}")
             continue
-        reference = str(row[REFERENCE_COL])
+        reference = to_shortname(row[REFERENCE_COL])
         for mag_col, svo_id, err_col, telescope in BANDS:
             if mag_col not in data.colnames or is_missing(row[mag_col]):
                 counts["skipped_missing_value"] += 1

@@ -7,7 +7,9 @@ build PUBLICATIONS from a table column instead of hand-listing it (see the comme
 example near the bottom).
 """
 
+import json
 import logging
+from pathlib import Path
 
 from astrodb_utils import build_db_from_json
 from astrodb_utils.publications import (
@@ -46,9 +48,46 @@ PUBLICATIONS = [
     # {"reference": "Rojas12",                             # no token / bare shortname:
     #  "description": "Discovery paper for ...",           #   supply metadata by hand
     #  "doi": "10.1088/0004-637X/748/2/93"},
+    # {"data_value": "Rojas2012", "doi": "..."},           # batch: value as written in the
+    #                                                      #   data table, for reference_map.json
 ]
 
 db = build_db_from_json(settings_file=SETTINGS_FILE)
+
+# Shared lookup from data-table reference values to Publications shortnames, read by the
+# other ingest skills. Batch mode only: give each PUBLICATIONS entry a "data_value".
+REFERENCE_MAP_PATH = Path("astrodb-ingest-artifacts/reference_map.json")
+new_map_entries = {}  # data value -> shortname, for this run
+
+
+def stored_reference(db, reference=None, doi=None, bibcode=None):
+    """The shortname actually stored for this paper (ADS may have generated it)."""
+    if reference:
+        return reference
+    for col, value in (("doi", doi), ("bibcode", bibcode)):
+        if value:
+            rows = db.query(db.Publications).filter(db.Publications.c[col] == value).all()
+            if len(rows) == 1:
+                return rows[0].reference
+    return None
+
+
+def read_reference_map(entries):
+    """Load reference_map.json; stop (before anything is saved) if a value already maps elsewhere."""
+    existing = json.loads(REFERENCE_MAP_PATH.read_text()) if REFERENCE_MAP_PATH.exists() else {}
+    conflicts = {k: (existing[k], v) for k, v in entries.items() if k in existing and existing[k] != v}
+    if conflicts:
+        raise ValueError(f"reference_map.json already maps these differently — ask the user: {conflicts}")
+    return existing
+
+
+def update_reference_map(existing, entries):
+    """Merge this run's entries into reference_map.json."""
+    existing.update(entries)
+    REFERENCE_MAP_PATH.parent.mkdir(parents=True, exist_ok=True)
+    REFERENCE_MAP_PATH.write_text(json.dumps(dict(sorted(existing.items())), indent=2) + "\n")
+    logger.info(f"Updated {REFERENCE_MAP_PATH} ({len(entries)} values from this run)")
+
 
 added = already_present = failed = 0
 for pub in PUBLICATIONS:
@@ -62,6 +101,8 @@ for pub in PUBLICATIONS:
     if found:
         already_present += 1
         logger.info(f"Already present, skipping: {label} ({result})")
+        if pub.get("data_value"):
+            new_map_entries[pub["data_value"]] = str(result)
         continue
 
     try:
@@ -75,6 +116,12 @@ for pub in PUBLICATIONS:
         )
         added += 1
         logger.info(f"Ingested: {label}")
+        if pub.get("data_value"):
+            shortname = stored_reference(db, reference, doi, bibcode)
+            if shortname:
+                new_map_entries[pub["data_value"]] = shortname
+            else:
+                logger.warning(f"Could not find the stored shortname for {label}; not added to the map")
     except Exception as e:
         failed += 1
         logger.warning(f"Failed to ingest {label}: {e}")
@@ -84,9 +131,16 @@ logger.info(
     f"out of {len(PUBLICATIONS)} publications"
 )
 
+existing_map = None
+if new_map_entries:
+    logger.info(f"Reference map for this run: {new_map_entries}")
+    existing_map = read_reference_map(new_map_entries)  # conflicts stop the run here, dry run included
+
 if SAVE_DB:
     db.save_database()
     logger.info("Database saved.")
+    if new_map_entries:
+        update_reference_map(existing_map, new_map_entries)
 else:
     logger.info(
         "Dry run complete — NOT saved. Set SAVE_DB = True to write the database to JSON files."
@@ -101,3 +155,11 @@ else:
 #     PUBLICATIONS = [{"reference": r} for r in refs]   # bare shortnames -> IGNORE_ADS=True
 #
 # If the column holds DOIs instead, use {"doi": d} and an ADS token to auto-populate.
+#
+# Keep the table's own value as "data_value" so the reference map can be written, e.g.
+# after resolving each one (Step 2):
+#
+#     PUBLICATIONS = [
+#         {"data_value": "Bonaca2020", "reference": "Bona20", "doi": "10.3847/2041-8213/ab800c"},
+#         ...
+#     ]

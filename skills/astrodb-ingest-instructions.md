@@ -24,6 +24,34 @@ its own artifact directory: **`astrodb-ingest-artifacts/ingest-workflow.md`**.
 - **Prepend** one entry (using the standard entry format from `astrodb-instructions.md`) after your main
   work — **most recent on top, each entry dated**. Do not edit existing entries; add a new one above them.
 
+## Reference map: `reference_map.json`
+
+Data tables often name papers differently from the `Publications` shortnames — e.g. the table says
+`Bonaca2020` but `Publications` has `Bona20`. So that every ingest script translates them the same way,
+the ingest phase keeps **one** lookup file: **`astrodb-ingest-artifacts/reference_map.json`**.
+
+```json
+{
+  "Bonaca2020": "Bona20",
+  "Ibata2024": "Ibat24",
+  "Li2021": "Li__21"
+}
+```
+
+- **Keys** are the reference values exactly as they appear in the data table (stripped of whitespace).
+  **Values** are the `Publications.reference` shortnames they point to.
+- **`astrodb-ingest-01-publications` writes it.** When ingesting references from a data table's column,
+  it records one entry per value — including values already equal to their shortname, and papers that
+  were already present — after the user confirms the save.
+- **Every other ingest skill reads it** (`astrodb-ingest-02-sources`, `astrodb-ingest-03-photometry`, …).
+  The script loads the file at run time and translates each value with `REFERENCE_MAP.get(value, value)`.
+  Never paste a hand-written copy of the map into a script: copies drift apart, and an unmapped value
+  makes that row fail.
+- **Merge, don't overwrite.** Add new keys to the existing file. If a key is already mapped to a
+  *different* shortname, stop and ask the user which is right.
+- Before writing an ingest script, check that every value in the reference column — after mapping —
+  exists in `Publications`. For any that don't, offer to run `astrodb-ingest-01-publications` first.
+
 ## Post-ingest checkpoint: link the database
 
 After every ingest that actually writes to the database (`SAVE_DB` was flipped to `True` and the save

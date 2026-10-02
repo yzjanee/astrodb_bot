@@ -1,5 +1,8 @@
 
+import json
 import logging
+from pathlib import Path
+
 from astropy.table import Table
 from astrodb_utils import build_db_from_json
 from astrodb_utils.sources import ingest_source
@@ -45,6 +48,18 @@ RA_COL_NAME    = "ra_deg"
 DEC_COL_NAME   = "dec_deg"
 EPOCH_COL_NAME = "epoch_year"
 
+# --- Reference map — data-table values -> Publications shortnames ---
+# Written by astrodb-ingest-01-publications (e.g. "Bonaca2020" -> "Bona20"). Read it here
+# instead of pasting a copy, so every ingest script translates references the same way.
+REFERENCE_MAP_PATH = Path("astrodb-ingest-artifacts/reference_map.json")
+REFERENCE_MAP = json.loads(REFERENCE_MAP_PATH.read_text()) if REFERENCE_MAP_PATH.exists() else {}
+
+
+def to_shortname(value):
+    value = str(value).strip()
+    return REFERENCE_MAP.get(value, value)
+
+
 # Ingest Loop
 sources_added = sources_skipped = 0
 for row in data:
@@ -53,7 +68,7 @@ for row in data:
         ingest_source(
             db,
             source=source_name,
-            reference=str(row[REFERENCE_COL]),
+            reference=to_shortname(row[REFERENCE_COL]),
             ra=float(row[RA_COL]) if RA_COL else None,
             dec=float(row[DEC_COL]) if DEC_COL else None,
             epoch=str(row[EPOCH_COL]) if EPOCH_COL else None,

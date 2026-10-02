@@ -118,6 +118,10 @@ Identify which mode applies:
   data = Table.read("path/to/file.ecsv")
   refs = sorted({str(r).strip() for r in data["reference"] if str(r).strip()})
   ```
+  Keep each value exactly as it appears in the table (the **data value**). The shortname you
+  store may differ (`Bonaca2020` → `Bona20`); the link between them is saved to
+  `astrodb-ingest-artifacts/reference_map.json` in Step 6 so later ingest skills can translate
+  the column (see "Reference map" in `references/astrodb-ingest-instructions.md`).
 - **Backfill an existing table** — `Publications` already has the `reference` rows but
   `bibcode`/`doi`/`description` are blank. See "Backfilling existing references" below.
 
@@ -151,9 +155,12 @@ anything:
 
 4. **Show the user the resolved table and wait for confirmation** before writing anything:
 
-   | reference | title | DOI | bibcode | context |
-   |-----------|-------|-----|---------|---------|
-   | Bona20 | High-resolution Spectroscopy of the GD-1 Stream... | 10.3847/2041-8213/ab800c | 2020ApJ...892L..37B | GD-1 stream |
+   | data value | reference | title | DOI | bibcode | context |
+   |------------|-----------|-------|-----|---------|---------|
+   | Bonaca2020 | Bona20 | High-resolution Spectroscopy of the GD-1 Stream... | 10.3847/2041-8213/ab800c | 2020ApJ...892L..37B | GD-1 stream |
+
+   (The **data value** column is only needed in batch mode — it's the value as written in the
+   data table.)
 
 ## Step 3: Deduplicate with `find_publication`
 
@@ -178,6 +185,11 @@ Read `scripts/ingest_publication.py` for the pattern, then write a **tailored** 
 - Set `IGNORE_ADS` correctly: `False` when a token is present and DOIs/bibcodes are
   available; `True` only as a genuine fallback (then supply `reference` and `description`).
 - Call `find_publication` before each `ingest_publication`.
+- In batch mode, give each entry a `data_value` (the value as written in the data table) and
+  merge the finished `data_value → reference` pairs into
+  `astrodb-ingest-artifacts/reference_map.json` when `SAVE_DB = True` (the template's
+  `read_reference_map()` / `update_reference_map()` do this, and stop if a value is already mapped to a different
+  shortname — checked before anything is saved).
 - Set `SAVE_DB = False`.
 
 `{LABEL}` is the input filename (batch) or the lead reference shortname (single paper).
@@ -198,6 +210,10 @@ After a clean dry run, ask:
 **Never set `SAVE_DB = True` automatically** — only on explicit user confirmation. Saving
 writes the JSON files back via `db.save_database()` (JSON layout) or commits the UPDATEs
 (sqlite).
+
+In batch mode, the same save run also updates `astrodb-ingest-artifacts/reference_map.json`.
+Tell the user it was written and how many values it maps, and mention that
+`astrodb-ingest-02-sources` / `astrodb-ingest-03-photometry` will read it.
 
 ---
 
@@ -241,6 +257,7 @@ evidence-annotated list in your final message, per `references/astrodb-ingest-in
 - [ ] Every reference was resolved to the *specific, verified* paper (DOI or bibcode), disambiguated by context — a bare shortname or author+year was never passed to `ingest_publication`. When you had to look a paper up (rather than being given a DOI/bibcode directly), you showed the resolved table and waited for the user's confirmation before writing.
 - [ ] Every `reference` shortname follows the naming convention — first four letters of the first author's last name + two-digit year — and any collisions were disambiguated with a `.` + last-4-characters-of-DOI suffix applied to **every** colliding paper, never bare letter suffixes like `Bona20a`.
 - [ ] `find_publication` was called before each `ingest_publication`, and references already present were reported as such rather than re-ingested.
+- [ ] If — and only if — the references came from a data table's column: after the confirmed save, every value from that column (including ones already present, and ones equal to their shortname) is in `astrodb-ingest-artifacts/reference_map.json`, merged into any existing file without silently changing an existing entry.
 - [ ] The tailored script at `astrodb-ingest-artifacts/ingest_{LABEL}_publications.py` contains only real resolved values (no placeholders), with `IGNORE_ADS` set correctly and `SAVE_DB = False`.
 - [ ] A dry run was executed, and you reported how many were added / already present / failed (with each failure's warning) and that nothing was saved.
 - [ ] `SAVE_DB = True` was set **only** after the user explicitly confirmed — never automatically.

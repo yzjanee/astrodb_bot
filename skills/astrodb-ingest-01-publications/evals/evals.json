@@ -60,7 +60,9 @@
         "Uses the stream column as disambiguating context for each reference before searching",
         "Searches Google Scholar, NASA ADS, or Crossref to resolve DOIs; resolves at least the spot-checked references to the CORRECT paper: Vasiliev2021->'Tango for three' Sagittarius doi 10.1093/mnras/staa3673; Shipp2020->Palomar 13 doi 10.3847/1538-3881/abbd3a",
         "Shows the resolved reference->title->DOI/bibcode table to the user and waits for confirmation before ingesting",
-        "Uses find_publication so already-present references are skipped, SAVE_DB is False, and confirms before saving"
+        "Uses find_publication so already-present references are skipped, SAVE_DB is False, and confirms before saving",
+        "Keeps each value as written in the CSV as data_value (e.g. Shipp2019) alongside its 4+2 shortname (e.g. Ship19), and shows both in the resolved table",
+        "After the user confirms the save, astrodb-ingest-artifacts/reference_map.json maps all six CSV values to their shortnames (e.g. \"Shipp2019\": \"Ship19\", \"Li2021\": \"Li__21\"), and the user is told the file was written"
       ]
     },
     {

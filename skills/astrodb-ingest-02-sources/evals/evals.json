@@ -49,6 +49,17 @@
           "DEC_COL_NAME is set to 'dec' (not 'dec_deg')",
           "EPOCH_COL_NAME is set to 'epoch' (not 'epoch_year')"
         ]
+      },
+      {
+        "id": 6,
+        "prompt": "Ingest sources from evals/data/mock_data.csv into my astrodb-template-db database. database.toml is in the project root. The references were already added with the publications skill, and astrodb-ingest-artifacts/reference_map.json is the file at evals/data/reference_map.json.",
+        "expected_output": "The CSV's discovery_ref values are 'GalCat2021', but Publications stores the paper as 'GalC21'. The skill reads astrodb-ingest-artifacts/reference_map.json, translates GalCat2021 -> GalC21, checks the translated value against Publications, and the generated script loads the map at run time (to_shortname) instead of containing a hand-written copy.",
+        "files": ["evals/data/mock_data.csv", "evals/data/reference_map.json"],
+        "expectations": [
+          "Reads astrodb-ingest-artifacts/reference_map.json and reports that GalCat2021 maps to GalC21",
+          "Checks the translated value (GalC21), not the raw CSV value, against Publications",
+          "The generated script loads reference_map.json at run time and passes the translated shortname as reference — it does not contain a hand-written REFERENCE_MAP dict"
+        ]
       }
     ]
   }

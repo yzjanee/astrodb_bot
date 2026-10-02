@@ -34,6 +34,10 @@ parameter meanings, and common warnings with fixes.
    `Publications`. If any reference is missing, **offer to run `ingest_publication`
    as a sub-step** before proceeding with source ingestion — do not just tell the user
    to do it manually and stop.
+   If the table's reference values are written differently from the shortnames (e.g.
+   `Bonaca2020` vs `Bona20`), translate them with `astrodb-ingest-artifacts/reference_map.json`
+   (see "Reference map" in `references/astrodb-ingest-instructions.md`) and check the
+   **translated** values. Values that are neither in the map nor in `Publications` are missing.
 5. **Internet (recommended)**: `ingest_source` queries SIMBAD for coordinates when
    RA/Dec are not in the table.
 
@@ -208,6 +212,8 @@ Do not copy `scripts/ingest_source.py` verbatim. The output script must:
 - Call `build_db_from_json(settings_file=SETTINGS_FILE)`
 - Only include optional columns (EPOCH_COL, EQUINOX_COL, etc.) that are present in the data
 - Use the correct `ra_col_name`, `dec_col_name`, `epoch_col_name` for the target DB
+- Translate the reference column through `reference_map.json` at run time, as the template's
+  `to_shortname()` does — never paste a hand-written copy of the map into the script
 - Set `SAVE_DB = False`
 - Use the dry-run log message: `"Dry run complete — NOT saved. Set SAVE_DB = True to write the database to JSON files."`
 Every variable must contain a real value — never write placeholder text to the file.
@@ -248,7 +254,8 @@ evidence-annotated list here, per the **completion-checklist convention** in
 **not** write the checklist out to a file.
 
 - [ ] `database.toml` was located (you asked the user rather than inventing one when it wasn't found).
-- [ ] Every discovery reference already exists in `Publications` — and for any that were missing, you offered to run `ingest_publication` as a sub-step rather than just telling the user to do it.
+- [ ] Every discovery reference already exists in `Publications` (after translating through `astrodb-ingest-artifacts/reference_map.json`, if it exists) — and for any that were missing, you offered to run `ingest_publication` as a sub-step rather than just telling the user to do it.
+- [ ] The script reads `reference_map.json` at run time (no hand-written copy of the map in the script).
 - [ ] Every source name was validated against SESAME/SIMBAD before the ingest script was written — unresolvable names were flagged and the user confirmed proceeding, and preferred-name suggestions were offered but never forced — or the check was skipped with a note because there was no internet.
 - [ ] You showed the user the data table's column names, dtypes, and a 3-row preview, and confirmed both the input-file column roles and the target database's schema column names (`ra`/`dec`/`epoch` variants) — asking which database when unsure.
 - [ ] The tailored script at `astrodb-ingest-artifacts/ingest_{REF}_sources.py` uses the user's real column names and paths, includes only optional columns that are actually present, uses the correct DB column names, and sets `SAVE_DB = False`.
