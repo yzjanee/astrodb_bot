@@ -1,5 +1,7 @@
 
 import logging
+from collections import Counter
+
 from astropy.table import Table
 from astrodb_utils import build_db_from_json
 from astrodb_utils.sources import ingest_source
@@ -45,10 +47,29 @@ RA_COL_NAME    = "ra_deg"
 DEC_COL_NAME   = "dec_deg"
 EPOCH_COL_NAME = "epoch_year"
 
+# --- Repeated source names — confirmed in Step 2.5 ---
+# Sources holds each name once. "keep_first": ingest the first row for a name, skip later ones.
+# "skip_all": skip every row whose name appears more than once.
+DUPLICATE_POLICY = "keep_first"
+
+name_counts = Counter(str(row[SOURCE_COL]).strip() for row in data)
+repeated_names = {n for n, c in name_counts.items() if c > 1}
+if repeated_names:
+    logger.warning(
+        f"{len(repeated_names)} source names appear more than once — policy: {DUPLICATE_POLICY}"
+    )
+
 # Ingest Loop
-sources_added = sources_skipped = 0
+sources_added = sources_skipped = duplicates_skipped = 0
+seen_names = set()
 for row in data:
-    source_name = str(row[SOURCE_COL])
+    source_name = str(row[SOURCE_COL]).strip()
+    if source_name in repeated_names:
+        if DUPLICATE_POLICY == "skip_all" or source_name in seen_names:
+            duplicates_skipped += 1
+            logger.info(f"Repeated name, skipping row: {source_name}")
+            continue
+        seen_names.add(source_name)
     try:
         ingest_source(
             db,
@@ -71,7 +92,10 @@ for row in data:
         sources_skipped += 1
         logger.warning(f"Skipping {source_name}: {e}")
  
-logger.info(f"Done: {sources_added} ingested, {sources_skipped} skipped out of {len(data)} rows")
+logger.info(
+    f"Done: {sources_added} ingested, {duplicates_skipped} skipped as repeated names, "
+    f"{sources_skipped} failed out of {len(data)} rows"
+)
 
 if SAVE_DB:
     db.save_database(directory="data/")

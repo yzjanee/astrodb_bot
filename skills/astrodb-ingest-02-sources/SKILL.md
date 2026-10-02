@@ -197,6 +197,44 @@ print(db.metadata.tables["Sources"].columns.keys())
 
 ---
 
+## Step 2.5: Check for repeated source names
+
+`Sources` has one row per object (`source` is the primary key), so a name that appears in more
+than one row of the data table can't be ingested twice. Check **before** writing the script,
+using the name exactly as it will be stored (after any prefix such as `"Gaia DR3 "`):
+
+```python
+from collections import Counter
+names = [str(row[SOURCE_COL]).strip() for row in data]   # apply the same name format the script will use
+repeated = {n: c for n, c in Counter(names).items() if c > 1}
+print(f"{len(repeated)} names repeat ({sum(c - 1 for c in repeated.values())} extra rows)")
+for n in list(repeated)[:5]:
+    rows = data[[str(v).strip() == n for v in data[SOURCE_COL]]]
+    print(rows)   # show the repeated rows side by side
+```
+
+If `astrodb-build-artifacts/astrodb-parse-result.json` has `repeated_ids` from
+`astrodb-build-02-parse-table`, mention that it already flagged these.
+
+**If nothing repeats**, say so in one line and continue.
+
+**If names repeat**, show the count and a few examples with their rows side by side (do the
+RA/Dec and reference match, or differ?), then ask the user — don't pick for them:
+
+> ⚠️ **N source names appear more than once (M extra rows)**, e.g. `<name>` (rows 12 and 840).
+> `Sources` can only hold each name once. How should I handle them?
+> 1. **Keep the first row** for each name and skip the rest (common when it's the same object
+>    listed more than once, e.g. a star in two streams)
+> 2. **Skip every copy** of a repeated name, so you can review them separately
+> 3. **Stop** so you can fix the table first
+
+Put the choice in the script as `DUPLICATE_POLICY` (`"keep_first"` or `"skip_all"`), report
+repeats separately from real failures, and note that the extra rows may still matter for
+other tables (e.g. one `Associations` row per stream) even though they don't go in `Sources`.
+Record the choice and the reason in `ingest-workflow.md`.
+
+---
+
 ## Step 3: Write `astrodb-ingest-artifacts/ingest_{REF}_sources.py`
 
 Read `scripts/ingest_source.py` to understand the script pattern — variable names,
@@ -208,6 +246,7 @@ Do not copy `scripts/ingest_source.py` verbatim. The output script must:
 - Call `build_db_from_json(settings_file=SETTINGS_FILE)`
 - Only include optional columns (EPOCH_COL, EQUINOX_COL, etc.) that are present in the data
 - Use the correct `ra_col_name`, `dec_col_name`, `epoch_col_name` for the target DB
+- Set `DUPLICATE_POLICY` to the user's Step 2.5 choice (leave the default if nothing repeats)
 - Set `SAVE_DB = False`
 - Use the dry-run log message: `"Dry run complete — NOT saved. Set SAVE_DB = True to write the database to JSON files."`
 Every variable must contain a real value — never write placeholder text to the file.
@@ -219,6 +258,7 @@ Every variable must contain a real value — never write placeholder text to the
 Run `astrodb-ingest-artifacts/ingest_{REF}_sources.py` with `SAVE_DB = False`. Report:
 
 -  How many sources were ingested successfully
+- How many rows were skipped as repeated names (from Step 2.5), kept separate from failures
 - Any rows skipped with their warning messages
 - Confirmation that the database was **not** saved
 
@@ -251,6 +291,7 @@ evidence-annotated list here, per the **completion-checklist convention** in
 - [ ] Every discovery reference already exists in `Publications` — and for any that were missing, you offered to run `ingest_publication` as a sub-step rather than just telling the user to do it.
 - [ ] Every source name was validated against SESAME/SIMBAD before the ingest script was written — unresolvable names were flagged and the user confirmed proceeding, and preferred-name suggestions were offered but never forced — or the check was skipped with a note because there was no internet.
 - [ ] You showed the user the data table's column names, dtypes, and a 3-row preview, and confirmed both the input-file column roles and the target database's schema column names (`ra`/`dec`/`epoch` variants) — asking which database when unsure.
+- [ ] Before the script was written, source names (in their final stored form) were checked for repeats; if any were found, you showed the count and examples and the user chose how to handle them (keep first / skip all / stop), the script's `DUPLICATE_POLICY` matches that choice, and the choice was recorded in `ingest-workflow.md` — or you reported that no names repeat.
 - [ ] The tailored script at `astrodb-ingest-artifacts/ingest_{REF}_sources.py` uses the user's real column names and paths, includes only optional columns that are actually present, uses the correct DB column names, and sets `SAVE_DB = False`.
 - [ ] A dry run was executed, and you reported how many sources were ingested / skipped (with warnings) and that the database was not saved.
 - [ ] `SAVE_DB = True` was set **only** after the user explicitly confirmed — never automatically.

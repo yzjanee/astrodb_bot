@@ -152,6 +152,31 @@
           "text": "After writing the output files, presents a short summary and asks the user to open the HTML file and confirm the parsed results — including whether they are ready to proceed to the schema-match step — and waits for that explicit confirmation instead of treating the skill as done or moving on"
         }
       ]
+    },
+    {
+      "prompt": "Parse this data table file and extract column information: 'data/stream_members_with_repeats.csv'",
+      "expected_output": "A markdown and HTML column table for the 5 columns (source_id, stream, ra, dec, reference). source_id is identified as the ID column; 2 of its values appear twice (1000000000000000003 and 1000000000000000004, 2 extra rows). This is reported in the output notes, the Checkpoint summary, and the sidecar's repeated_ids — without dropping or changing any rows.",
+      "files": [
+        "data/stream_members_with_repeats.csv"
+      ],
+      "assertions": [
+        {
+          "text": "All 5 columns are present in the output"
+        },
+        {
+          "text": "source_id is checked for repeated values and the output notes say 2 values repeat (2 extra rows), with examples"
+        },
+        {
+          "text": "The Checkpoint summary in chat mentions the repeated source_id values"
+        },
+        {
+          "text": "astrodb-build-artifacts/astrodb-parse-result.json contains repeated_ids for source_id"
+        },
+        {
+          "text": "No rows were dropped or changed — the repeats are reported, not fixed"
+        }
+      ],
+      "id": 5
     }
   ]
 }
