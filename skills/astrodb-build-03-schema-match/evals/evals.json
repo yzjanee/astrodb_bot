@@ -356,6 +356,30 @@
           "text": "Column 'spt_ref' is mapped to the reference field of the spectral type table (SpectralTypes.reference), not left unmatched"
         }
       ]
+    },
+    {
+      "id": 9,
+      "prompt": "Here's the astrodb-build-02-parse-table output for my stellar stream membership table. Map each column to the right AstroDB table and field.\n\n| Column | Description | Units | Type |\n|--------|-------------|-------|------|\n| source_id | Gaia DR3 source identifier | — | int64 |\n| stream | Stellar stream the star belongs to | — | str |\n| ra | Right ascension (ICRS) | deg | float64 |\n| dec | Declination (ICRS) | deg | float64 |\n| reference | Paper(s) reporting the membership | — | str |\n\nNotes:\n- `reference`: 3 of 6 rows hold two comma-separated references (e.g. \"Bonaca2020, Ibata2024\").",
+      "expected_output": "source_id maps to Sources.source (with the raw ID as a Names alternate name), stream to Associations/AssociationList, ra/dec to Sources.ra_deg/dec_deg, and reference to the reference fields. Because some reference cells hold two papers, the agent asks in the Checkpoint message which one should be the main reference and where the others go, suggesting the first as reference and the rest in Sources.other_references (comments in data tables). It waits for the answer before writing files, writes the rule into the reference column's Notes, and logs it in build-workflow.md.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "eval9_asks_multi_ref",
+          "text": "The agent notices that some reference cells hold two references and asks the user how to handle them in the Checkpoint message, before writing any output files"
+        },
+        {
+          "id": "eval9_suggests_first_ref",
+          "text": "The suggested rule is: first reference -> reference (foreign key), the others -> Sources.other_references (and comments for data tables without an other_references field)"
+        },
+        {
+          "id": "eval9_rule_in_notes",
+          "text": "The reference column's Notes in the mapping output state the multi-reference rule so the ingest skills can follow it"
+        },
+        {
+          "id": "eval9_all_refs_need_publications",
+          "text": "The agent points out that every reference in those cells (not only the first) needs a Publications row"
+        }
+      ]
     }
   ]
 }

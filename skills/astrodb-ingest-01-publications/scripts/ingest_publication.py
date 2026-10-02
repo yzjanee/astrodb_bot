@@ -98,6 +98,8 @@ else:
 #     from astropy.table import Table
 #     data = Table.read("path/to/file.ecsv")     # auto-detects .fits/.csv/.ecsv
 #     refs = sorted({str(r).strip() for r in data["reference"] if str(r).strip()})
+#     # cells like "Bonaca2020, Ibata2024": split so each paper is ingested
+#     # refs = sorted({p.strip() for r in data["reference"] for p in re.split(r"[,;|]", str(r)) if p.strip()})
 #     PUBLICATIONS = [{"reference": r} for r in refs]   # bare shortnames -> IGNORE_ADS=True
 #
 # If the column holds DOIs instead, use {"doi": d} and an ADS token to auto-populate.

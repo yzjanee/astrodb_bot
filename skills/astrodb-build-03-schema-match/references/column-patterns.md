@@ -117,6 +117,20 @@ Use the data to also populate the SourceTypeList and AssociationList tables with
 **References:**
 - `reference`, `ref`, `bibcode`, `citation` → `Publications.reference`
 
+**Special case: several references in one cell.** If some cells hold more than one reference
+(`"Bonaca2020, Ibata2024"` — `astrodb-build-02-parse-table` lists these as `multi_value_columns`
+in `astrodb-build-artifacts/astrodb-parse-result.json`), the column can't map straight to
+`reference`: that field points to one `Publications` row. Ask the user which reference is the
+main one, and where the others go. The usual choice:
+
+| Part of the cell | Goes to |
+|------------------|---------|
+| First reference | `reference` (the foreign key) in every table the row feeds |
+| The others | `Sources.other_references` for the `Sources` row; `comments` (e.g. `"also: Ibat24"`) for data tables without an `other_references` field |
+
+Other answers are fine (e.g. a different reference as the main one); record whatever the user
+picks. Every reference in the cell still needs a `Publications` row.
+
 ## Layer 2: Units (use when name is ambiguous)
 
 | Units | Likely field |

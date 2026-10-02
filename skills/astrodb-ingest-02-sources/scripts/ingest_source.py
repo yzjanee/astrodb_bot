@@ -45,20 +45,37 @@ RA_COL_NAME    = "ra_deg"
 DEC_COL_NAME   = "dec_deg"
 EPOCH_COL_NAME = "epoch_year"
 
+# --- Cells with more than one reference (e.g. "Bonaca2020, Ibata2024") — Step 2 ---
+# The first reference becomes Sources.reference; the rest go to Sources.other_references.
+# Set to None if every cell holds a single reference.
+MULTI_REF_SEPARATOR = None           # e.g. "," — from the schema-match rule
+
+
+def split_references(raw):
+    """Return (main reference, other references joined by ', ' or None)."""
+    raw = str(raw).strip()
+    if not MULTI_REF_SEPARATOR or MULTI_REF_SEPARATOR not in raw:
+        return raw, None
+    parts = [p.strip() for p in raw.split(MULTI_REF_SEPARATOR) if p.strip()]
+    return parts[0], (", ".join(parts[1:]) or None)
+
+
 # Ingest Loop
 sources_added = sources_skipped = 0
 for row in data:
     source_name = str(row[SOURCE_COL])
+    reference, extra_refs = split_references(row[REFERENCE_COL])
+    other_refs = [r for r in (extra_refs, str(row[OTHER_REF_COL]) if OTHER_REF_COL else None) if r]
     try:
         ingest_source(
             db,
             source=source_name,
-            reference=str(row[REFERENCE_COL]),
+            reference=reference,
             ra=float(row[RA_COL]) if RA_COL else None,
             dec=float(row[DEC_COL]) if DEC_COL else None,
             epoch=str(row[EPOCH_COL]) if EPOCH_COL else None,
             equinox=str(row[EQUINOX_COL]) if EQUINOX_COL else None,
-            other_reference=str(row[OTHER_REF_COL]) if OTHER_REF_COL else None,
+            other_reference=", ".join(other_refs) if other_refs else None,
             comment=str(row[COMMENT_COL]) if COMMENT_COL else None,
             ra_col_name=RA_COL_NAME,
             dec_col_name=DEC_COL_NAME,

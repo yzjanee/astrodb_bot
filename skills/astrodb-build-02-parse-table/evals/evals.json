@@ -152,6 +152,31 @@
           "text": "After writing the output files, presents a short summary and asks the user to open the HTML file and confirm the parsed results — including whether they are ready to proceed to the schema-match step — and waits for that explicit confirmation instead of treating the skill as done or moving on"
         }
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "Parse this data table file and extract column information: 'data/stream_members_multi_ref.csv'",
+      "expected_output": "A markdown and HTML column table for the 5 columns. The reference column is checked for cells with more than one value: 3 of 6 rows hold two comma-separated references (e.g. \"Bonaca2020, Ibata2024\"). This is reported in the output notes, the Checkpoint summary, and the sidecar's multi_value_columns, without splitting or changing the values.",
+      "files": [
+        "data/stream_members_multi_ref.csv"
+      ],
+      "assertions": [
+        {
+          "text": "All 5 columns are present in the output"
+        },
+        {
+          "text": "The output notes say the reference column has 3 rows with more than one comma-separated reference, with an example such as \"Bonaca2020, Ibata2024\""
+        },
+        {
+          "text": "The Checkpoint summary in chat mentions the multi-reference cells"
+        },
+        {
+          "text": "astrodb-build-artifacts/astrodb-parse-result.json contains multi_value_columns with an entry for reference (separator \",\")"
+        },
+        {
+          "text": "The reference values are reported, not split or changed"
+        }
+      ]
     }
   ]
 }

@@ -85,8 +85,19 @@ If any column matched to `SourceTypes.source_type` (a spectral type), include th
 "Special case: spectral types" question from `references/column-patterns.md` in this same
 message, asking whether to use the richer `SpectralTypes` table instead.
 
+If a reference column has cells with more than one reference (listed as `multi_value_columns`
+in `astrodb-build-artifacts/astrodb-parse-result.json`, or visible in the data), include the
+"Special case: several references in one cell" question from `references/column-patterns.md`
+in this same message — e.g.:
+
+> 484 rows of `reference` list two papers (e.g. `"Bonaca2020, Ibata2024"`), but each row can
+> point to only one. Should I use the **first** as the main `reference` and put the others in
+> `Sources.other_references` (and `comments` in the data tables)? Or would you prefer another rule?
+
 **Wait for the user's response before writing any files.** Apply any overrides — and the
-spectral-types table choice, if asked — before producing the final output.
+spectral-types and multi-reference choices, if asked — before producing the final output.
+Write the multi-reference rule into the reference column's Notes in the mapping table so the
+ingest skills can follow it.
 
 For **High** confidence matches, no confirmation is needed — they can be written directly.
 
@@ -214,7 +225,8 @@ Follow the convention in `references/astrodb-build-instructions.md`. Append one 
 `astrodb-build-artifacts/build-workflow.md` (create it with the standard header if it
 doesn't exist yet). Record: any Low/Medium confidence matches and why that mapping was
 chosen, all Unmatched columns and how the user resolved each one, any new tables or fields
-proposed, and any decisions made without `astrodb-build-artifacts/directions.md` guidance.
+proposed, the rule for cells with more than one reference (if any), and any decisions made
+without `astrodb-build-artifacts/directions.md` guidance.
 
 ## Completion Checklist
 
@@ -226,6 +238,7 @@ the evidence-annotated list here, per the **completion-checklist convention** in
 - [ ] You read `references/schema.md` before mapping, and applied all three matching layers — name patterns, units (normalizing astropy's spaced forms like `km / s` to their compact equivalents), and description — plus the special-case rules in `references/column-patterns.md`. Any directions-document guidance was honored over the default heuristics.
 - [ ] Any photometry band names were resolved to SVO Filter Profile Service IDs per `references/photometry-filters.md`.
 - [ ] If any column matched `SourceTypes.source_type` (a spectral type), you asked the user whether to use the richer `SpectralTypes` table instead, per the special case in `references/column-patterns.md` — or there were no spectral type columns.
+- [ ] If any reference column has cells with more than one reference, you asked the user (in the same Checkpoint message) which one is the main `reference` and where the others go, wrote that rule into the column's Notes, and logged it in `build-workflow.md` — or no such cells exist.
 - [ ] Every input column has a row with DB Table, DB Field, Confidence, and Notes — columns with nowhere to go are marked **Unmatched** rather than dropped.
 - [ ] Unmatched columns were raised with the user in a single combined question; if they responded, their choices were applied (and any new field/table added to Proposed Schema Additions).
 - [ ] Output was written both as a markdown table and as an HTML file per `references/html-output.md` — directly inside `astrodb-build-artifacts/` (no subdirectory) as `<base>-schema-match.md`/`.html`, appending a `-1`/`-2` suffix rather than overwriting an existing file — including the Lookup Table Checklist section (and Proposed Schema Additions if any were proposed).

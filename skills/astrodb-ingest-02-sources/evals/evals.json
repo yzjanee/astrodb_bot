@@ -49,6 +49,17 @@
           "DEC_COL_NAME is set to 'dec' (not 'dec_deg')",
           "EPOCH_COL_NAME is set to 'epoch' (not 'epoch_year')"
         ]
+      },
+      {
+        "id": 7,
+        "prompt": "Ingest sources from evals/data/stream_members_multi_ref.csv into my astrodb-template-db database. Use \"Gaia DR3 <source_id>\" as the source name. database.toml is in the project root. In schema-match we agreed: the first reference is the main one and the rest go to other_references.",
+        "expected_output": "The skill notices that 3 reference cells hold two references, follows the agreed rule (first -> Sources.reference, the rest -> Sources.other_references), sets MULTI_REF_SEPARATOR = \",\" in the script, and checks every reference in those cells (Ibata2024, Bonaca2020, Shipp2019, Koposov2023) against Publications, offering to run ingest-01-publications for any that are missing.",
+        "files": ["evals/data/stream_members_multi_ref.csv"],
+        "expectations": [
+          "Notices that some reference cells hold more than one reference",
+          "The script sets MULTI_REF_SEPARATOR = \",\" and passes the first reference as reference and the rest as other_reference (e.g. Bonaca2020 -> reference, Ibata2024 -> other_reference)",
+          "Checks every reference in the multi-reference cells against Publications — not just the first one — and offers to run ingest-01-publications for any that are missing"
+        ]
       }
     ]
   }

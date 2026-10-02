@@ -165,6 +165,13 @@ Example prompt to user:
 > The table has these columns: `Name, RA, Dec, Dist, Reference`
 > Which column is the source name? Which is the discovery reference?
 
+**If some reference cells hold more than one reference** (e.g. `"Bonaca2020, Ibata2024"`),
+follow the rule chosen in `astrodb-build-03-schema-match` (see the reference column's Notes in
+the schema-match output and `build-workflow.md`). If there isn't one, ask the user. The usual
+rule: the first reference is `Sources.reference` and the rest go to `Sources.other_references`.
+Set `MULTI_REF_SEPARATOR` in the script so `split_references()` applies it. Check that
+**every** reference in those cells exists in `Publications`, not just the first one.
+
 
 After confirmation, use the **input file name** (without extension) as `{REF}` to
 name the output script — e.g. `NearbyGalaxies_Jan2021_PUBLIC` →
@@ -249,6 +256,7 @@ evidence-annotated list here, per the **completion-checklist convention** in
 
 - [ ] `database.toml` was located (you asked the user rather than inventing one when it wasn't found).
 - [ ] Every discovery reference already exists in `Publications` — and for any that were missing, you offered to run `ingest_publication` as a sub-step rather than just telling the user to do it.
+- [ ] If any reference cell holds more than one reference, the script follows the agreed rule (`MULTI_REF_SEPARATOR` set; first → `reference`, the rest → `other_references`, unless the user chose otherwise), and every reference in those cells was checked against `Publications` — or every cell holds a single reference.
 - [ ] Every source name was validated against SESAME/SIMBAD before the ingest script was written — unresolvable names were flagged and the user confirmed proceeding, and preferred-name suggestions were offered but never forced — or the check was skipped with a note because there was no internet.
 - [ ] You showed the user the data table's column names, dtypes, and a 3-row preview, and confirmed both the input-file column roles and the target database's schema column names (`ra`/`dec`/`epoch` variants) — asking which database when unsure.
 - [ ] The tailored script at `astrodb-ingest-artifacts/ingest_{REF}_sources.py` uses the user's real column names and paths, includes only optional columns that are actually present, uses the correct DB column names, and sets `SAVE_DB = False`.

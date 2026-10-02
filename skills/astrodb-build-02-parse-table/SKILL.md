@@ -134,6 +134,33 @@ For each column, extract:
 
 Legacy fixed-width astronomy formats (MRT tables especially, but also older FITS/CSV exports) sometimes mark missing data with a literal placeholder — `999`, `-999`, `-99.9` — instead of a true null. These aren't caught by the reader, so a quick scan matters: if a numeric column's max or min value is a suspiciously round number that recurs far more often than its neighbors, treat it as a fill value rather than a real measurement, and note it in the output (see Step 5) rather than silently reporting it as data.
 
+#### Checking for cells with more than one value
+
+Some tables pack several values into one cell — most often references, e.g.
+`"Bonaca2020, Ibata2024"`. A database field holds one value (a `reference` points to one
+`Publications` row), so these need a decision later in `astrodb-build-03-schema-match`.
+
+Check the reference column(s) and other short ID/category columns (names like `ref`,
+`reference`, `bibcode`, `citation`, `name`, `stream`, `band`). Skip free-text columns such as
+comments and descriptions, where commas are normal.
+
+```python
+multi_value_columns = {}
+for col in cols_to_check:                       # the columns picked above
+    values = [str(v).strip() for v in t[col]]   # or df[col] for pandas
+    for sep in (",", ";", "|"):
+        hits = [v for v in values if sep in v]
+        if hits:
+            multi_value_columns[col] = {"separator": sep, "n_rows": len(hits), "examples": hits[:3]}
+            break
+print(multi_value_columns)
+```
+
+Don't split or change the values here — report them: in the output notes (Step 5), in the
+Checkpoint summary, and in the sidecar as `multi_value_columns` (Step 5) so
+`astrodb-build-03-schema-match` can ask the user how to handle them. If none are found, say so
+in the notes.
+
 #### Converting dtypes to human-readable strings
 
 The dtype printed by Step 2 may be a raw numpy code. Convert before displaying:
@@ -219,6 +246,7 @@ with open("astrodb-build-artifacts/astrodb-parse-result.json") as f:
 
 sidecar["output_md"] = "astrodb-build-artifacts/<basename>-parsed-data-table.md"
 sidecar["output_html"] = "astrodb-build-artifacts/<basename>-parsed-data-table.html"
+sidecar["multi_value_columns"] = multi_value_columns  # from Step 3; {} if none
 
 with open("astrodb-build-artifacts/astrodb-parse-result.json", "w") as f:
     json.dump(sidecar, f)
@@ -230,6 +258,8 @@ After writing the output files, present a brief summary in chat:
 - Total columns parsed, and how many rows are in the file
 - How many descriptions/units came from file metadata, were inferred, or are still `—`
 - Any anomalies (fallback reader used, columns with unexpected types, etc.)
+- Columns where some cells hold more than one value (e.g. `"Bonaca2020, Ibata2024"`): which
+  column, how many rows, and an example — or that none were found
 
 Then ask the user to open the HTML file and explicitly confirm the results:
 
@@ -267,6 +297,7 @@ the evidence-annotated list here, per the **completion-checklist convention** in
 - [ ] Descriptions were extracted using the format-specific methods in `references/format-specific-metadata.md` — not taken from what Step 2 printed (which is only reliable for ECSV and CDS/MRT).
 - [ ] For a `.txt`/`.dat` input, you checked for the `Byte-by-byte Description of file` MRT signature before treating it as plain CSV.
 - [ ] Numeric columns were spot-checked for sentinel fill values (e.g. `999`, `-999`); any found are noted in the output rather than reported as real data.
+- [ ] Reference and other short ID/category columns were checked for cells holding more than one value (`,` `;` `|`); any found (column, row count, examples) are in the output notes, the Checkpoint summary, and the sidecar's `multi_value_columns` — or the notes say none were found.
 - [ ] Missing descriptions/units were inferred where possible; for any still missing, you asked the user (when fewer than 10) or noted at the end how many remain.
 - [ ] dtypes are shown as human-readable strings (e.g. `float64`, `str`), not raw numpy codes like `>f8`.
 - [ ] Both the `.md` and `.html` files were written directly inside `astrodb-build-artifacts/` — no subdirectory — as `<base>-parsed-data-table.md`/`.html`, each beginning with the metadata block. An existing file was not overwritten; a `-1`/`-2` suffix was appended instead.

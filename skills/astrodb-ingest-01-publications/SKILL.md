@@ -118,6 +118,12 @@ Identify which mode applies:
   data = Table.read("path/to/file.ecsv")
   refs = sorted({str(r).strip() for r in data["reference"] if str(r).strip()})
   ```
+  If some cells hold more than one reference (e.g. `"Bonaca2020, Ibata2024"`), split them so
+  **each** paper is looked up and ingested:
+  ```python
+  import re
+  refs = sorted({p.strip() for r in data["reference"] for p in re.split(r"[,;|]", str(r)) if p.strip()})
+  ```
 - **Backfill an existing table** — `Publications` already has the `reference` rows but
   `bibcode`/`doi`/`description` are blank. See "Backfilling existing references" below.
 
