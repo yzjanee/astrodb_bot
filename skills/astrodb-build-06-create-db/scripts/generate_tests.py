@@ -55,6 +55,23 @@ def get_all_columns(table):
     return [(c["name"], c.get("datatype", "string")) for c in table.get("columns", [])]
 
 
+def get_foreign_keys(table):
+    """Return {column: (referenced_table, referenced_column)} for single-column ForeignKey constraints."""
+    fks = {}
+    for con in table.get("constraints", []) or []:
+        if con.get("@type") != "ForeignKey":
+            continue
+        cols = con.get("columns", [])
+        refs = con.get("referencedColumns", [])
+        if len(cols) != 1 or len(refs) != 1:
+            continue
+        # Felis ids look like "#Table.column"
+        local_col = cols[0].lstrip("#").split(".", 1)[1]
+        ref_table, ref_col = refs[0].lstrip("#").split(".", 1)
+        fks[local_col] = (ref_table, ref_col)
+    return fks
+
+
 def dtype_to_test_value(col_name, dtype, index=0):
     """Return a sensible test value for a column given its Felis datatype."""
     float_types = {"float", "double"}
@@ -182,15 +199,38 @@ def write_test_database(output_dir, schema, table_names):
     if "Sources" not in table_set or "Names" not in table_set:
         return  # Skip — no Sources or Names table to test
 
+    tables_by_name = {t["name"]: t for t in get_tables(schema)}
+
     # Find non-nullable columns for Sources so we build a valid row
-    sources_table = next(t for t in get_tables(schema) if t["name"] == "Sources")
+    sources_table = tables_by_name["Sources"]
     non_nullable = get_non_nullable_columns(sources_table)
+    source_fks = get_foreign_keys(sources_table)
+
+    # Required foreign keys on Sources (e.g. reference -> Publications.reference) need
+    # a parent row to exist first, or the insert fails the foreign key check.
+    parents = []  # (variable name, table name, kwargs string)
+    fk_values = {}
+    for col_name, _dtype in non_nullable:
+        if col_name not in source_fks:
+            continue
+        ref_table, ref_col = source_fks[col_name]
+        parent_value = "Test ORM Ref"
+        fk_values[col_name] = parent_value
+        if any(p[1] == ref_table for p in parents):
+            continue
+        parent_parts = [f'{ref_col}="{parent_value}"']
+        for i, (p_col, p_dtype) in enumerate(get_non_nullable_columns(tables_by_name.get(ref_table, {}))):
+            if p_col != ref_col:
+                parent_parts.append(f"{p_col}={dtype_to_test_value(p_col, p_dtype, i)!r}")
+        parents.append((f"parent_{ref_table.lower()}", ref_table, ", ".join(parent_parts)))
 
     # Build keyword args for the test Source row
     kwargs_parts = []
     for i, (col_name, dtype) in enumerate(non_nullable):
         val = dtype_to_test_value(col_name, dtype, i)
-        if isinstance(val, str):
+        if col_name in fk_values:
+            kwargs_parts.append(f'{col_name}="{fk_values[col_name]}"')
+        elif isinstance(val, str):
             kwargs_parts.append(f'{col_name}="Test ORM Source"')
         elif isinstance(val, float):
             kwargs_parts.append(f"{col_name}=0.0")
@@ -221,6 +261,13 @@ def write_test_database(output_dir, schema, table_names):
 
     source_kwargs = ", ".join(kwargs_parts) if kwargs_parts else 'source="Test ORM Source"'
 
+    # Parent rows (added before the source, deleted after it)
+    parent_classes = "".join(f"    {t} = Base.classes.{t}\n" for _, t, _ in parents)
+    parent_rows = "".join(f"    {var} = {t}({kw})\n" for var, t, kw in parents)
+    parent_adds = "".join(f"        session.add({var})\n" for var, _, _ in parents)
+    parent_commit = "        session.commit()\n" if parents else ""
+    parent_deletes = "".join(f"        session.delete({var})\n" for var, _, _ in parents)
+
     content = f'''"""
 Tests that the database ORM works as expected.
 These tests add and remove rows to verify basic database operations —
@@ -236,12 +283,12 @@ def test_orm_use(db):
 
     Sources = Base.classes.Sources
     Names = Base.classes.Names
-
-    s = Sources({source_kwargs})
+{parent_classes}
+{parent_rows}    s = Sources({source_kwargs})
     n = Names({name_kwargs})
 
     with db.session as session:
-        session.add(s)
+{parent_adds}{parent_commit}        session.add(s)
         session.add(n)
         session.commit()
 
@@ -252,7 +299,7 @@ def test_orm_use(db):
         session.delete(n)
         session.delete(s)
         session.commit()
-
+{parent_deletes}{parent_commit}
     assert db.query(db.Sources).filter(db.Sources.c.source == "Test ORM Source").count() == 0
 '''
     (output_dir / "test_database.py").write_text(content)
